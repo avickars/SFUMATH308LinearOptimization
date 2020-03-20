@@ -1,10 +1,13 @@
 import LinearOptimization as LO
 import numpy as np
+import pprint
 
-A = np.array([[1, -2, -3], [3, -4, 3], [5, 6, 3]])
+A = np.array([[-1, -2, -3], [3, -4, -3], [5, 6, 3],[5,6,7]])
+m = 4
+n = 3
+test = LO.Optimizer(A)
+# test.print()
 
-# print(A[1,:]<0)
 
-test = LO.Optimizer(A, 3, 3, ['x1', 'x2', 't1', 't2'])
 
 test.simplex_algorithm()
