@@ -85,40 +85,41 @@ class Optimizer:
         # *************************
         primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
         primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
-        print(primal_equality_constraints)
-        print(primal_unconstrained_variables)
+        # print(primal_equality_constraints)
+        # print(primal_unconstrained_variables)
         if len(primal_unconstrained_variables) > 0 or len(primal_equality_constraints) > 0:
-            if len(primal_equality_constraints) == len(primal_unconstrained_variables):
-                while len(primal_equality_constraints) > 0:
-                    self.__pivot([primal_equality_constraints[0], primal_unconstrained_variables[0]])
+            # if len(primal_equality_constraints) == len(primal_unconstrained_variables):
+            while len(primal_equality_constraints) > 0 and len(primal_unconstrained_variables) > 0:
+                self.__pivot([primal_equality_constraints[0], primal_unconstrained_variables[0]])
 
-                    # Recording Rows and Columns of the Tableau
-                    self.primal_recorded_equations.insert(len(self.primal_recorded_equations),[self.A[primal_equality_constraints[0], :], self.primal_dep[primal_unconstrained_variables[0]]])
-                    self.dual_recorded_equations.insert(len(self.dual_recorded_equations), [self.A[:, primal_unconstrained_variables[0]], self.dual_dep[primal_equality_constraints[0]]])
+                # Recording Rows and Columns of the Tableau
+                self.primal_recorded_equations.insert(len(self.primal_recorded_equations),[self.A[primal_equality_constraints[0], :], self.primal_ind[:],self.primal_dep[primal_equality_constraints[0]]])
+                self.dual_recorded_equations.insert(len(self.dual_recorded_equations), [self.A[:, primal_unconstrained_variables[0]], self.dual_ind[:],self.dual_dep[primal_unconstrained_variables[0]]])
 
-                    # Deleting the Corresponding Variables
-                    del self.primal_ind[primal_unconstrained_variables[0]]
-                    del self.primal_dep[primal_equality_constraints[0]]
-                    del self.dual_ind[primal_equality_constraints[0]]
-                    del self.dual_dep[primal_unconstrained_variables[0]]
+                # Deleting the Corresponding Variables
+                del self.primal_ind[primal_unconstrained_variables[0]]
+                del self.primal_dep[primal_equality_constraints[0]]
+                del self.dual_ind[primal_equality_constraints[0]]
+                del self.dual_dep[primal_unconstrained_variables[0]]
 
-                    # Deleting Rows and Columns of the Tableau
-                    self.A = np.delete(self.A, primal_equality_constraints[0], axis=0)
-                    self.m = self.m - 1
-                    self.A = np.delete(self.A, primal_unconstrained_variables[0], axis=1)
-                    self.n = self.n - 1
+                # Deleting Rows and Columns of the Tableau
+                self.A = np.delete(self.A, primal_equality_constraints[0], axis=0)
+                self.m = self.m - 1
+                self.A = np.delete(self.A, primal_unconstrained_variables[0], axis=1)
+                self.n = self.n - 1
 
-                    # Resetting the Variables
-                    primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
-                    primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
+                # Resetting the Variables
+                primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
+                primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
 
             """ What you need to do now is the case when there is a different amount of unconstrained variables and equality constraints, the while loop immediately above can be used
             but youll a little something extra to take care of the extra unconstrained cases or equality cases depending on the situation"""
 
+        print(self.primal_recorded_equations)
+        print(self.dual_recorded_equations)
 
 
-        self.print()
-
+        return
         print("********************************************************************************************************************************************************")
         print("********************************************************************************************************************************************************")
         while any(self.A[0:self.m, self.n] < 0):  # Testing if the Tableau is Maximum Basic Feasible
