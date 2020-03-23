@@ -80,10 +80,18 @@ class Optimizer:
         print("Dual Dependent Variables: ", self.dual_dep)
 
     def simplex_algorithm(self):
+        self.print()
+        print("************************************************************************************************************************")
+        print("************************************************************************************************************************")
         primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
         primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
 
         while len(primal_equality_constraints) > 0 and len(primal_unconstrained_variables) > 0:
+            if self.A[primal_equality_constraints[0], primal_unconstrained_variables[0]] == 0:  # Testing if it tries to pivot on a zero.  If so it passes to the method that is equipped to deal with it
+                self.removing_primal_unconstrained_variables(primal_unconstrained_variables)
+                primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
+                primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
+                continue
             self.__pivot([primal_equality_constraints[0], primal_unconstrained_variables[0]])
 
             # Recording Rows and Columns of the Tableau
@@ -105,60 +113,13 @@ class Optimizer:
             # Resetting the Variables
             primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
             primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
+            self.print()
 
         if len(primal_unconstrained_variables) > 0:
-            while len(primal_unconstrained_variables) > 0:
-                try:
-                    pivot_row = int(np.where(self.A[primal_unconstrained_variables[0], 0:self.n] != 0)[0][0])
-                except IndexError as error:
-                    print(error)
-                    print('The LP as entered cannot be converted into canonical form, please check the tableau for incorrect entries.  Look for a column of zeros in row: ', primal_unconstrained_variables[0])
-
-                pivot_row = int(pivot_row)
-
-                # Pivoting
-                self.__pivot([pivot_row, primal_unconstrained_variables[0]])
-
-                # Recording Rows and Columns of the Tableau
-                self.primal_recorded_equations.insert(len(self.primal_recorded_equations), [self.A[pivot_row, :], self.primal_ind[:], self.primal_dep[pivot_row]])
-
-                # Deleting the Corresponding Variables
-                del self.primal_dep[pivot_row]
-                del self.dual_ind[pivot_row]
-
-                # Deleting Rows and Columns of the Tableau
-                self.A = np.delete(self.A, pivot_row, axis=0)
-                self.m = self.m - 1
-
-                # Reset Variables
-                primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
+            self.removing_primal_unconstrained_variables(primal_unconstrained_variables)
 
         if len(primal_equality_constraints) > 0:
-            while len(primal_equality_constraints) > 0:
-
-                try:
-                    pivot_row = int(np.where(self.A[primal_equality_constraints[0], 0:self.n] != 0)[0][0])
-                except IndexError as error:
-                    print(error)
-                    print('The LP as entered cannot be converted into canonical form, please check the tableau for incorrect entries.  Look for a row of zeros in row: ', primal_equality_constraints[0])
-
-                self.__pivot([primal_equality_constraints[0], pivot_row])
-
-                # Recording Rows and Columns of the Tableau
-                self.dual_recorded_equations.insert(len(self.dual_recorded_equations), [self.A[:, pivot_row], self.dual_ind[:], self.dual_dep[pivot_row]])
-
-                # Deleting the Corresponding Variables
-                del self.primal_ind[pivot_row]
-                del self.dual_dep[pivot_row]
-
-                # Deleting Rows and Columns of the Tableau
-                self.A = np.delete(self.A, pivot_row, axis=1)
-                self.n = self.n - 1
-
-                # Resetting the Variables
-                primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
-
-        return
+            self.removing_equality_constraints(primal_equality_constraints)
 
         while any(self.A[0:self.m, self.n] < 0):  # Testing if the Tableau is Maximum Basic Feasible
             if not self.__max_basic_feasible():
@@ -167,6 +128,63 @@ class Optimizer:
         while any(self.A[self.m, 0:self.n] > 0):  # Testing if the Tableau is Optimal
             if not self.__optimal():
                 return
+
+    def removing_equality_constraints(self,pec):
+        primal_equality_constraints = pec
+        while len(primal_equality_constraints) > 0:
+            try:
+                pivot_row = int(np.where(self.A[primal_equality_constraints[0], 0:self.n] != 0)[0][0])
+            except IndexError as error:
+                print(error)
+                print('The LP as entered cannot be converted into canonical form, please check the tableau for incorrect entries.  Look for a row of zeros in row: ', primal_equality_constraints[0])
+
+            self.__pivot([primal_equality_constraints[0], pivot_row])
+
+            # Recording Rows and Columns of the Tableau
+            self.dual_recorded_equations.insert(len(self.dual_recorded_equations), [self.A[:, pivot_row], self.dual_ind[:], self.dual_dep[pivot_row]])
+
+            # Deleting the Corresponding Variables
+            del self.primal_ind[pivot_row]
+            del self.dual_dep[pivot_row]
+
+            # Deleting Rows and Columns of the Tableau
+            self.A = np.delete(self.A, pivot_row, axis=1)
+            self.n = self.n - 1
+
+            # Resetting the Variables
+            primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
+            self.print()
+            print("************************************************************************************************************************")
+
+    def removing_primal_unconstrained_variables(self, puc):
+        primal_unconstrained_variables = puc
+        while len(primal_unconstrained_variables) > 0:
+            try:
+                pivot_row = int(np.where(self.A[primal_unconstrained_variables[0], 0:self.n] != 0)[0][0])
+            except IndexError as error:
+                print(error)
+                print('The LP as entered cannot be converted into canonical form, please check the tableau for incorrect entries.  Look for a column of zeros in row: ', primal_unconstrained_variables[0])
+
+            pivot_row = int(pivot_row)
+
+            # Pivoting
+            self.__pivot([pivot_row, primal_unconstrained_variables[0]])
+
+            # Recording Rows and Columns of the Tableau
+            self.primal_recorded_equations.insert(len(self.primal_recorded_equations), [self.A[pivot_row, :], self.primal_ind[:], self.primal_dep[pivot_row]])
+
+            # Deleting the Corresponding Variables
+            del self.primal_dep[pivot_row]
+            del self.dual_ind[pivot_row]
+
+            # Deleting Rows and Columns of the Tableau
+            self.A = np.delete(self.A, pivot_row, axis=0)
+            self.m = self.m - 1
+
+            # Reset Variables
+            primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
+            self.print()
+            print("************************************************************************************************************************")
 
     def __final_result(self):
         print("Primal: ")
@@ -217,7 +235,7 @@ class Optimizer:
                 return True
 
     def __pivot(self, pivot_cell):
-        print("The Pivot Position is: ", "( ", pivot_cell[0], " , ", pivot_cell[1], " )")
+        print("The Pivot Position is: ", "( ", pivot_cell[0], " , ", pivot_cell[1], " ).  This gives: ")
         temp_primal_dep = self.primal_ind[pivot_cell[1]]  # Switching Variables of The Primal Linear Program
         self.primal_ind[pivot_cell[1]] = self.primal_dep[pivot_cell[0]]
         self.primal_dep[pivot_cell[0]] = temp_primal_dep
