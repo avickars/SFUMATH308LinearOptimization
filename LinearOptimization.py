@@ -80,60 +80,93 @@ class Optimizer:
         print("Dual Dependent Variables: ", self.dual_dep)
 
     def simplex_algorithm(self):
-        self.print()
-
-        # *************************
         primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
         primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
-        # print(primal_equality_constraints)
-        # print(primal_unconstrained_variables)
-        if len(primal_unconstrained_variables) > 0 or len(primal_equality_constraints) > 0:
-            # if len(primal_equality_constraints) == len(primal_unconstrained_variables):
-            while len(primal_equality_constraints) > 0 and len(primal_unconstrained_variables) > 0:
-                self.__pivot([primal_equality_constraints[0], primal_unconstrained_variables[0]])
+
+        while len(primal_equality_constraints) > 0 and len(primal_unconstrained_variables) > 0:
+            self.__pivot([primal_equality_constraints[0], primal_unconstrained_variables[0]])
+
+            # Recording Rows and Columns of the Tableau
+            self.primal_recorded_equations.insert(len(self.primal_recorded_equations), [self.A[primal_equality_constraints[0], :], self.primal_ind[:], self.primal_dep[primal_equality_constraints[0]]])
+            self.dual_recorded_equations.insert(len(self.dual_recorded_equations), [self.A[:, primal_unconstrained_variables[0]], self.dual_ind[:], self.dual_dep[primal_unconstrained_variables[0]]])
+
+            # Deleting the Corresponding Variables
+            del self.primal_ind[primal_unconstrained_variables[0]]
+            del self.primal_dep[primal_equality_constraints[0]]
+            del self.dual_ind[primal_equality_constraints[0]]
+            del self.dual_dep[primal_unconstrained_variables[0]]
+
+            # Deleting Rows and Columns of the Tableau
+            self.A = np.delete(self.A, primal_equality_constraints[0], axis=0)
+            self.m = self.m - 1
+            self.A = np.delete(self.A, primal_unconstrained_variables[0], axis=1)
+            self.n = self.n - 1
+
+            # Resetting the Variables
+            primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
+            primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
+
+        if len(primal_unconstrained_variables) > 0:
+            while len(primal_unconstrained_variables) > 0:
+                try:
+                    pivot_row = int(np.where(self.A[primal_unconstrained_variables[0], 0:self.n] != 0)[0][0])
+                except IndexError as error:
+                    print(error)
+                    print('The LP as entered cannot be converted into canonical form, please check the tableau for incorrect entries.  Look for a column of zeros in row: ', primal_unconstrained_variables[0])
+
+                pivot_row = int(pivot_row)
+
+                # Pivoting
+                self.__pivot([pivot_row, primal_unconstrained_variables[0]])
 
                 # Recording Rows and Columns of the Tableau
-                self.primal_recorded_equations.insert(len(self.primal_recorded_equations),[self.A[primal_equality_constraints[0], :], self.primal_ind[:],self.primal_dep[primal_equality_constraints[0]]])
-                self.dual_recorded_equations.insert(len(self.dual_recorded_equations), [self.A[:, primal_unconstrained_variables[0]], self.dual_ind[:],self.dual_dep[primal_unconstrained_variables[0]]])
+                self.primal_recorded_equations.insert(len(self.primal_recorded_equations), [self.A[pivot_row, :], self.primal_ind[:], self.primal_dep[pivot_row]])
 
                 # Deleting the Corresponding Variables
-                del self.primal_ind[primal_unconstrained_variables[0]]
-                del self.primal_dep[primal_equality_constraints[0]]
-                del self.dual_ind[primal_equality_constraints[0]]
-                del self.dual_dep[primal_unconstrained_variables[0]]
+                del self.primal_dep[pivot_row]
+                del self.dual_ind[pivot_row]
 
                 # Deleting Rows and Columns of the Tableau
-                self.A = np.delete(self.A, primal_equality_constraints[0], axis=0)
+                self.A = np.delete(self.A, pivot_row, axis=0)
                 self.m = self.m - 1
-                self.A = np.delete(self.A, primal_unconstrained_variables[0], axis=1)
+
+                # Reset Variables
+                primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
+
+        if len(primal_equality_constraints) > 0:
+            while len(primal_equality_constraints) > 0:
+
+                try:
+                    pivot_row = int(np.where(self.A[primal_equality_constraints[0], 0:self.n] != 0)[0][0])
+                except IndexError as error:
+                    print(error)
+                    print('The LP as entered cannot be converted into canonical form, please check the tableau for incorrect entries.  Look for a row of zeros in row: ', primal_equality_constraints[0])
+
+                self.__pivot([primal_equality_constraints[0], pivot_row])
+
+                # Recording Rows and Columns of the Tableau
+                self.dual_recorded_equations.insert(len(self.dual_recorded_equations), [self.A[:, pivot_row], self.dual_ind[:], self.dual_dep[pivot_row]])
+
+                # Deleting the Corresponding Variables
+                del self.primal_ind[pivot_row]
+                del self.dual_dep[pivot_row]
+
+                # Deleting Rows and Columns of the Tableau
+                self.A = np.delete(self.A, pivot_row, axis=1)
                 self.n = self.n - 1
 
                 # Resetting the Variables
                 primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
-                primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
-
-            """ What you need to do now is the case when there is a different amount of unconstrained variables and equality constraints, the while loop immediately above can be used
-            but youll a little something extra to take care of the extra unconstrained cases or equality cases depending on the situation"""
-
-        print(self.primal_recorded_equations)
-        print(self.dual_recorded_equations)
-
 
         return
-        print("********************************************************************************************************************************************************")
-        print("********************************************************************************************************************************************************")
+
         while any(self.A[0:self.m, self.n] < 0):  # Testing if the Tableau is Maximum Basic Feasible
             if not self.__max_basic_feasible():
                 return
-        print("The Primal is Maximum Basic Feasible")
-        print("********************************************************************************************************************************************************")
 
         while any(self.A[self.m, 0:self.n] > 0):  # Testing if the Tableau is Optimal
             if not self.__optimal():
                 return
-        print("********************************************************************************************************************************************************")
-        print("********************************************************************************************************************************************************")
-        self.__final_result()
 
     def __final_result(self):
         print("Primal: ")
@@ -162,7 +195,6 @@ class Optimizer:
 
     def __unbounded_check(self, j):  # Method That tests if a Linear Program is Unbounded, by testing a specific c_j > 0 and a column j
         if all(self.A[0:self.m, j] <= 0):
-            print("********************************************************************************************************************************************************")
             print("The Linear Program is Unbounded in column: ", j, "  No Solution!")
             self.print()
             return False
@@ -198,23 +230,13 @@ class Optimizer:
         for i in range(0, self.m + 1):  # Going through each entry in the tableau
             for j in range(0, self.n + 1):
                 if i == pivot_cell[0] and j != pivot_cell[1]:  # Pivot if on the same row as the pivot cell (and is not the pivot cell)
-                    # print("here 1")
-                    # print("Pivoting on: ", "( ", i, " , ", j, " )")
                     self.A[i, j] = temp[i, j] / temp[pivot_cell[0], pivot_cell[1]]
                 elif j == pivot_cell[1] and i != pivot_cell[0]:  # Pivot if on the same column as the pivot cell (and is not the pivot cell)
-                    # print("here 2")
-                    # print("Pivoting on: ", "( ", i, " , ", j, " )")
                     self.A[i, j] = -1 * temp[i, j] / temp[pivot_cell[0], pivot_cell[1]]
                 elif i == pivot_cell[0] and j == pivot_cell[1]:  # Pivoting on the actual pivot cell
-                    # print("here 3")
-                    # print("Pivoting on: ", "( ", i, " , ", j, " )")
                     self.A[i, j] = 1 / temp[i, j]
                 else:  # All other entries
-                    # print("here 4")
-                    # print("Pivoting on: ", "( ", i, " , ", j, " )")
                     self.A[i, j] = (temp[i, j] * temp[pivot_cell[0], pivot_cell[1]] - temp[pivot_cell[0], j] * temp[i, pivot_cell[1]]) / temp[pivot_cell[0], pivot_cell[1]]
-        self.print()
-        print("********************************************************************************************************************************************************")
 
     def __min(self, col, start_row):
         min_ratio = self.A[start_row, self.n] / self.A[start_row, col]
