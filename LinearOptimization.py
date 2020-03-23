@@ -72,10 +72,22 @@ class Optimizer:
         return variables
 
     def print(self):
+        # problem_complete = [""]
+        # [problem_complete.insert(len(problem_complete),i) for i in self.primal_ind]
+        # for i in range(0,self.m):
+        #     problem_complete.insert(len(problem_complete),self.dual_ind[i])
+        #     [problem_complete.insert(len(problem_complete), elem) for elem in self.A[i,:]]
+        #     problem_complete.insert(len(problem_complete),self.primal_dep[i])
+        # [problem_complete.insert(len(problem_complete), j) for j in self.dual_dep]
+        #
+        # for i in range(0,self.m):
+        #     for j in range(0,self.n):
+        #         print(problem_complete[i+j])
+        #         print()
+        # print(problem_complete)
         print("A = ", self.A)
         print("Primal Independent Variables: ", self.primal_ind)
         print("Primal Dependent Variables: ", self.primal_dep)
-
         print("Dual Independent Variables: ", self.dual_ind)
         print("Dual Dependent Variables: ", self.dual_dep)
 
