@@ -90,6 +90,8 @@ class Optimizer:
         print("Primal Dependent Variables: ", self.primal_dep)
         print("Dual Independent Variables: ", self.dual_ind)
         print("Dual Dependent Variables: ", self.dual_dep)
+        print("Primal Stored Equations: ", self.primal_recorded_equations)
+        print("Dual Stored Equations: ", self.dual_recorded_equations)
 
     def simplex_algorithm(self):
         self.print()
@@ -97,7 +99,6 @@ class Optimizer:
         print("************************************************************************************************************************")
         primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
         primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
-
         while len(primal_equality_constraints) > 0 and len(primal_unconstrained_variables) > 0:
             if self.A[primal_equality_constraints[0], primal_unconstrained_variables[0]] == 0:  # Testing if it tries to pivot on a zero.  If so it passes to the method that is equipped to deal with it
                 self.removing_primal_unconstrained_variables(primal_unconstrained_variables)
@@ -125,7 +126,6 @@ class Optimizer:
             # Resetting the Variables
             primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
             primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
-            self.print()
 
         if len(primal_unconstrained_variables) > 0:
             self.removing_primal_unconstrained_variables(primal_unconstrained_variables)
@@ -140,6 +140,10 @@ class Optimizer:
         while any(self.A[self.m, 0:self.n] > 0):  # Testing if the Tableau is Optimal
             if not self.__optimal():
                 return
+
+        print("************************************************************************************************************************")
+        print("************************************************************************************************************************")
+        self.print()
 
     def removing_equality_constraints(self,pec):
         primal_equality_constraints = pec
@@ -165,7 +169,6 @@ class Optimizer:
 
             # Resetting the Variables
             primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
-            self.print()
             print("************************************************************************************************************************")
 
     def removing_primal_unconstrained_variables(self, puc):
@@ -195,7 +198,6 @@ class Optimizer:
 
             # Reset Variables
             primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
-            self.print()
             print("************************************************************************************************************************")
 
     def __final_result(self):
@@ -209,17 +211,22 @@ class Optimizer:
 
     def __optimal(self):
         possible_pivot_columns = np.where(self.A[self.m, 0:self.n] > 0)
+
         possible_pivot_columns = possible_pivot_columns[0]
         for j in possible_pivot_columns:  # Testing if the Linear Program is Unbounded
             if not self.__unbounded_check(j):
                 return False
 
         if len(possible_pivot_columns) > 1:  # If there are more than one choice, this will pass to method to decide which one
+            # self. __min_optimal([self.primal_dep[i] for i in possible_pivot_columns], False)
             pivot_col = self.__which_row_or_col_to_use([self.primal_dep[i] for i in possible_pivot_columns], False)
+            print(pivot_col)
         else:
+            # self.__min_optimal([self.primal_dep[i] for i in possible_pivot_columns], False)
             pivot_col = possible_pivot_columns[0]
-
         pivot_cell = [self.__min(pivot_col, np.where(self.A[0:self.m, pivot_col] > 0)[0][0]), pivot_col]
+        # print(np.where(self.A[0:self.m, pivot_col] > 0)[0])
+        # return
         self.__pivot(pivot_cell)
         return True
 
@@ -267,19 +274,22 @@ class Optimizer:
                     self.A[i, j] = 1 / temp[i, j]
                 else:  # All other entries
                     self.A[i, j] = (temp[i, j] * temp[pivot_cell[0], pivot_cell[1]] - temp[pivot_cell[0], j] * temp[i, pivot_cell[1]]) / temp[pivot_cell[0], pivot_cell[1]]
+        self.print()
 
     def __min(self, col, start_row):
         min_ratio = self.A[start_row, self.n] / self.A[start_row, col]
         current_row = start_row
+        # print(current_row)
         for i in range(start_row + 1, self.m):
-            if self.A[i, col] == 0:
+            if self.A[i, col] <= 0:
                 continue
-            if min_ratio > self.A[i, self.n] / self.A[i, col] > 0:
+            if min_ratio > self.A[i, self.n] / self.A[i, col] >= 0:
                 min_ratio = self.A[i, self.n] / self.A[i, col]
                 current_row = i
             elif self.A[i, self.n] / self.A[i, col] == min_ratio:
-                current_row = self.which_row_or_col_to_use([self.primal_dep[i] for i in [current_row, i]], False)
+                current_row = self.__which_row_or_col_to_use([self.primal_dep[i] for i in [current_row, i]], False)
                 min_ratio = self.A[current_row, self.n] / self.A[current_row, col]
+            # print(current_row)
         return current_row
 
     def __which_row_or_col_to_use(self, choices, col):  # Returns the Proper Choice According to the Order for Blands Anti Cycling Rule.
