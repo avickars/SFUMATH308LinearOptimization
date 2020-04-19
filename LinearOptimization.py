@@ -52,6 +52,7 @@ class Optimizer:
 
     def __dual_variable_creator(self, var, iterable, dual_primal):  # Based on the constraints of the primal LP, it creates the variables and constrains of the Dual LP
         variables = [var] * iterable
+
         for j in range(0, iterable):
             if not dual_primal:
                 if self.primal_ind[j].startswith("*"):  # Testing for Equality in the Constraints
@@ -99,6 +100,7 @@ class Optimizer:
         print("************************************************************************************************************************")
         primal_equality_constraints = getIndexPositions(self.primal_dep, '0')
         primal_unconstrained_variables = getIndexPositionsThatStartWith(self.primal_ind, "*")
+
         while len(primal_equality_constraints) > 0 and len(primal_unconstrained_variables) > 0:
             if self.A[primal_equality_constraints[0], primal_unconstrained_variables[0]] == 0:  # Testing if it tries to pivot on a zero.  If so it passes to the method that is equipped to deal with it
                 self.removing_primal_unconstrained_variables(primal_unconstrained_variables)
