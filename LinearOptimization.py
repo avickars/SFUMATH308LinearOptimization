@@ -1,5 +1,4 @@
 import numpy as np
-from fractions import Fraction
 
 
 def getIndexPositions(listOfElements, item):
@@ -49,6 +48,12 @@ class Optimizer:
 
         self.primal_recorded_equations = []
         self.dual_recorded_equations = []
+
+        if len(self.primal_ind) != self.n + 1 or len(self.primal_dep) != self.m + 1:
+            raise Exception("ERROR, INCORRECT VARIABLES")
+
+
+
 
     def __dual_variable_creator(self, var, iterable, dual_primal):  # Based on the constraints of the primal LP, it creates the variables and constrains of the Dual LP
         variables = [var] * iterable

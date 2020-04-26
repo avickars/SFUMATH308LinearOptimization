@@ -1,8 +1,8 @@
 import LinearOptimization as LO
 import numpy as np
 
-A = np.array([[-2, 1, -2], [1, -1, -1], [1, 1, 0]])
+A = np.array([[1,4,-7],[3,4,8],[5,6,0]])
 
-example = LO.Optimizer(A, primal_independent=["*x", "y", "z"], primal_dependent=["0", "t"])
+example = LO.Optimizer(A)
 
 example.simplex_algorithm()

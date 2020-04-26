@@ -4,7 +4,7 @@
 This solver was developed due to an apparent absence of online solvers that used Tucker Tableau's while performing the simplex algorithm.  To be specific, this solver targets the output required for MATH 308, Linear Optimization at Simon Fraser University in Burnaby, BC.  It should also be noted that this solver was absolutely not written with efficiency in mind and was purely created to follow the neccessary steps, and to produce the output required for the class.  Examples of the variation of the Simplex Algorithm used can be found in the text Linear Programming and Its Applications by James K. Strayer. 
 
 ## How to use it:
-Inputting a tucker tableau into the solver is fairly straight forward.  Three examples are given below.
+Inputting a tucker tableau into the solver is fairly straight forward.  Four examples are given below.
 
 ### Example 1
 The following example is taken from tableau given on page 51 of text.  To begin, store the elements as a numpy array, and create an Optimization object.  To execute the simplex algorithm call the simplex_algorithm() method. 
