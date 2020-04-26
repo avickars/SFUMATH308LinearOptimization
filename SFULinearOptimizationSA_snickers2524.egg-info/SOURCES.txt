@@ -1,0 +1,7 @@
+README.md
+setup.py
+LinearOptimization/__init__.py
+SFULinearOptimizationSA_snickers2524.egg-info/PKG-INFO
+SFULinearOptimizationSA_snickers2524.egg-info/SOURCES.txt
+SFULinearOptimizationSA_snickers2524.egg-info/dependency_links.txt
+SFULinearOptimizationSA_snickers2524.egg-info/top_level.txt
